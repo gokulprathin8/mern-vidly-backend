@@ -41,6 +41,7 @@ const courses = [
 //        res.send('The course with the id is not found!').status(404)
 //    }
 // });
+
 router.get('/', async (req, res) => {
     const courses = await Course.find().sort('name');
     res.send(courses);
