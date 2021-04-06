@@ -1,16 +1,18 @@
+const { Course, validateCourse } = require('../models/courses');
+
 const express = require('express');
 const mongoose = require('mongoose');
-const Joi = require('joi');
 const router = express.Router();
 
-const Course = mongoose.model('Course', new mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
-        min: 5,
-        max: 255
+router.get('/:id', async (req, res) => {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+        res.status(404).send('No Course found!')
     }
-}));
+
+    res.send(course);
+});
 
 router.get('/', async (req, res) => {
     const courses = await Course.find().sort('name');
@@ -39,10 +41,13 @@ router.post('/', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-    
-    const { error } = validateCourse(course);
+    const schema = Joi.object({
+        name: Joi.string().min(3).required()
+    });
+
+    const { error } = schema.validate(req.body);
     if (error) {
-        res.status(400).send(result.error);
+        res.status(400).send(error);
         return;
     }
 
@@ -57,30 +62,14 @@ router.put('/:id', async (req, res) => {
 
 });
 
-router.delete('/:id', (req, res) => {
-    const course = Course.findByIdAndRemove(req.params.id);
+router.delete('/:id', async (req, res) => {
+    const course = await Course.findByIdAndRemove(req.params.id);
     if (!course) {
         return res.status(404).send('The course for deleting is not found!');
     }
     res.send(course);
 });
 
-router.get('/:id', async (req, res) => {
-    const course = await Course.findById(req.params.id);
 
-    if (!course) {
-        res.status(404).send('No Course found!')
-    }
-
-    res.send(course);
-});
-
-function validateCourse(course) {
-    const schema = Joi.object({
-        name: Joi.string().min(3).required()
-    });
-
-    return schema.validate({course}, schema);
-}
 
 module.exports = router;
