@@ -1,5 +1,16 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const Joi = require('joi');
 const router = express.Router();
+
+const Course = new mongoose.model('Course', new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+        min: 5,
+        max: 255
+    }
+}));
 
 const courses = [
     {
@@ -30,26 +41,22 @@ const courses = [
 //        res.send('The course with the id is not found!').status(404)
 //    }
 // });
-
-router.post('/', (req, res) => {
-    const schema = Joi.object({
-        name: Joi.string().min(3).required()
-    })
-
-    const result = schema.validate(req.body);
+router.get('/', async (req, res) => {
+    const courses = await Course.find().sort('name');
+    res.send(courses);
+});
 
 
-    if (result.error) {
-        res.status(400).send(result.error);
-        return;
+router.post('/', async (req, res) => {
+    const { error } = validateCourse(req.body);
+    if (error) {
+        return res.status(400).send(error);
     }
 
-    const course = {
-        id: courses.length + 1,
+    const course = new Course({
         name: req.body.name
-    };
-
-    courses.push(course);
+    });
+    const result = await course.save();
     res.send(course);
 });
 
@@ -60,7 +67,7 @@ router.put('/:id', (req, res) => {
         res.send('The course with the id is not found').send(404);
     }
 
-    const result = validateCourse(req.body);
+    const result = validateCourse(course);
 
     if (result.error) {
         res.status(400).send(result.error);
@@ -88,9 +95,7 @@ function validateCourse(course) {
         name: Joi.string().min(3).required()
     });
 
-    const result = schema.validate(req.body, schema);
-
-    return result;
+    return schema.validate(course, schema);
 }
 
 module.exports = router;

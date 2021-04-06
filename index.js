@@ -1,5 +1,6 @@
 const express = require('express');
 
+const mongoose = require('mongoose');
 const debug = require('debug')('app:startup');
 const config = require('config');
 const Joi = require('joi');
@@ -9,6 +10,8 @@ const app = express();
 
 const courses = require('./routes/courses');
 
+// Database Configuration Settings
+mongoose.connect('mongodb://localhost/vidly').then(() => debug('Connected to Mongodb')).catch((e) => debug(e));
 
 if (app.get('env') === 'development') {
     app.use(morgan('tiny'));
